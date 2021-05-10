@@ -1,0 +1,13 @@
+# Docker
+docker-compose*.yml
+Dockerfile
+
+.idea/
+.github/
+.*ignore
+
+venv/
+data/
+
+
+__pycache__
