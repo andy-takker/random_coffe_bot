@@ -5,7 +5,7 @@ from keyboards.inline.callback_data import action_callback
 main_menu_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text='Создать новую заявку',
+            InlineKeyboardButton(text='Создать заявку на встречу',
                                  callback_data=action_callback.new(name='create_request')),
         ],[ InlineKeyboardButton(text='Мои заявки',
                                  callback_data=action_callback.new(name='show_history_request')),

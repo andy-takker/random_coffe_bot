@@ -40,14 +40,14 @@ async def answer_place(message: Message, state: FSMContext):
         async with state.proxy() as data:
             data['location'] = {'longitude': message.location.longitude, 'latitude': message.location.latitude}
             data['place'] = None
-    await message.answer(f'Введите дату и время в формате\n(в формате ДД-ММ-ГГГГ ЧЧ:ММ)',
-                         reply_markup=choosing_time_keyboard)
+    await message.answer(f'Выберите дату и время встречи или напишите в формате ДД.ММ.ГГГГ ЧЧ:ММ',
+                         reply_markup=choosing_date_keyboard)
     await RequestForm.next()
 
 
 def is_date(str_date: str) -> bool:
     try:
-        a = datetime.datetime.strptime(str_date, '%d-%m-%Y %H:%M')
+        a = datetime.datetime.strptime(str_date, '%d.%m.%Y %H:%M')
         now = datetime.datetime.now()
         if a < now:
             return False
@@ -71,23 +71,23 @@ async def answer_message_date(message: Message, state: FSMContext):
     await RequestForm.next()
 
 
-@dp.callback_query_handler(choosing_datetime_callback.filter(datetime='time'), state=RequestForm.date_q)
-async def answer_callback_time(call: CallbackQuery, callback_data: dict, state: FSMContext, ):
-    await call.answer(cache_time=5)
-    await call.message.edit_reply_markup(reply_markup=None)
-    async with state.proxy() as data:
-        dt = datetime.datetime.now().replace(hour=int(callback_data['hour']), minute=int(callback_data['minute']))
-        data['date'] = dt
-    await call.message.answer(f'Выберите день:', reply_markup=choosing_date_keyboard)
-
-
 @dp.callback_query_handler(choosing_datetime_callback.filter(datetime='date'), state=RequestForm.date_q)
 async def answer_callback_time(call: CallbackQuery, callback_data: dict, state: FSMContext, ):
     await call.answer(cache_time=5)
     await call.message.edit_reply_markup(reply_markup=None)
     async with state.proxy() as data:
+        data['date'] = datetime.datetime.now().replace(day=int(callback_data['day']), month=int(callback_data['month']),
+                                                       year=int(callback_data['year']))
+    await call.message.answer(f'Выберите время:', reply_markup=choosing_time_keyboard)
+
+
+@dp.callback_query_handler(choosing_datetime_callback.filter(datetime='time'), state=RequestForm.date_q)
+async def answer_callback_time(call: CallbackQuery, callback_data: dict, state: FSMContext, ):
+    await call.answer(cache_time=5)
+    await call.message.edit_reply_markup(reply_markup=None)
+    async with state.proxy() as data:
         dt = data['date']
-        data['date'] = dt.replace(day=int(callback_data['day']), month=int(callback_data['month']), year=int(callback_data['year']))
+        data['date'] = dt.replace(hour=int(callback_data['hour']), minute=int(callback_data['minute']))
     await call.message.answer(f'Почти все...\nЕсли хотите, оставьте комментарий или пожелание для собеседника:')
     await RequestForm.next()
 
@@ -100,13 +100,15 @@ async def answer_comment(message: Message, state: FSMContext):
         request = await DbCommands.create_request(user_id=message.from_user.id, data=data)
         await message.answer('Заявка успешно создана')
         await state.finish()
-        await message.answer(request.to_msg, reply_markup=main_menu_keyboard)
         if request.location is not None:
+            await message.answer(request.to_msg)
             location = request.get_location()
             await bot.send_location(
                 chat_id=message.from_user.id,
                 longitude=location['longitude'],
                 latitude=location['latitude'], )
+        else:
+            await message.answer(request.to_msg, reply_markup=main_menu_keyboard)
 
 
 @dp.callback_query_handler(text_contains='show_history_request', state=None)
