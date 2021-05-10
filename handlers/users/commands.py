@@ -19,15 +19,20 @@ async def bot_start(message: Message):
 
 @dp.message_handler(CommandHelp())
 async def bot_help(message: Message):
-    user = await DbCommands.get_user(user_id=message.from_user.id)
-    logging.info(message.from_user.username)
-    if user is not None:
-        await message.answer(f"User: {user.name} {message.from_user.username}")
-    else:
-        await message.answer("Вы не найдены в базе :(")
+    await message.answer('Привет! Я RandomDinner бот, здесь вы можете оставить заявку на встречу со случайным сотрудником вашей компании и пойти с ним на обед или на кофе, если он тоже находится в поиске, так же вы можете отказаться от встречи в любой момент.')
+    await message.answer(
+        'Для регистрации и создании заявки от вас потребуется лишь имя, занимаемая должность, офис в котором вы находитесь а так же информации о планируемой встрече : где и когда')
+    await message.answer(f'Random Dinner это отличная возможность познакомиться с новыми людьми, узнать больше о вашей компании изнутри и просто интересно провести время')
+    await message.answer('При возникновении вопросов, не обрабатываемыми ботам можете обращаться к администратору @natalenko_sergey')
+
+
 
 
 @dp.message_handler(Command(commands=['reset']), state='*')
 async def bot_reset(message: Message, state: FSMContext):
     await state.finish()
-    await message.answer(f'Выберите действие:', reply_markup=main_menu_keyboard)
+    user = await DbCommands.get_user(user_id=message.from_user.id)
+    if user is None:
+        await message.answer(f'Привет, {message.from_user.full_name}', reply_markup=registration_keyboard)
+    else:
+        await message.answer(f'Выберите действие!', reply_markup=main_menu_keyboard)
