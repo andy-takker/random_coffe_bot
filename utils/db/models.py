@@ -67,9 +67,12 @@ class Meeting(Base):
 
     query: sql.select
 
-    request = relationship('Request', backref='meeting_request', foreign_keys=[request_id])
-    request_user = relationship('User', backref='meeting_request_user', foreign_keys=[request_user_id])
-    second_user = relationship('User', backref='meeting_second_user', foreign_keys=[second_user_id])
+    request = relationship('Request', backref='meeting_request', foreign_keys=[request_id], lazy='joined',
+                           innerjoin=True)
+    request_user = relationship('User', backref='meeting_request_user', foreign_keys=[request_user_id], lazy='joined',
+                                innerjoin=True)
+    second_user = relationship('User', backref='meeting_second_user', foreign_keys=[second_user_id], lazy='joined',
+                               innerjoin=True)
 
     @property
     def to_msg(self):
@@ -97,7 +100,7 @@ class Request(Base):
 
     query: sql.select
 
-    user = relationship('User', backref='request_user', foreign_keys=[user_id])
+    user = relationship('User', backref='request_user', foreign_keys=[user_id], lazy='joined', innerjoin=True)
 
     def __repr__(self):
         return f'<Request {self.id}>'
